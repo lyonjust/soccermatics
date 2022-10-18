@@ -5,15 +5,17 @@ import numpy as np
 import re
 import datetime as dt
 from time import sleep
-from tqdm import tqdm
 
 seed = 0
 rng = np.random.default_rng(seed)
 
+MAX_RETRIES = 5
+
 SUMMER_2018_DATE = dt.date(2018, 6, 1)
 
 headers = {'User-Agent':
-           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
+           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36',
+           'Connection': 'keep-alive'}
 
 # "a" is a placeholder, can be anything, technically is player name but doesn't matter
 base_url = 'https://www.transfermarkt.com/a/marktwertverlauf/spieler/'
@@ -22,7 +24,7 @@ columns = ['player_name', 'transfermarkt_player_id',
            'date', 'market_value_in_gbp']
 
 
-def get_market_value_history_of_player(transfermarkt_player_id):
+def get_market_value_history_of_player(transfermarkt_player_id, retry_count=0):
     '''
     Takes a Transfermarkt player ID
     Returns a tuple of player name and a "list of dictionaries" of the market value history of the player according to Transfermarkt
@@ -58,16 +60,28 @@ def get_market_value_history_of_player(transfermarkt_player_id):
         player_name = None
         market_values = None
 
+    except ConnectionResetError as e:
+        if retry_count == MAX_RETRIES:
+            raise e
+        sleep_time = rng.uniform(1, 3)
+        sleep(sleep_time)
+        get_market_value_history_of_player(
+            transfermarkt_player_id, retry_count + 1)
+
     return player_name, market_values
 
 
-def get_latest_market_value(transfermarkt_player_id, maximum_date=dt.date.today(), as_pandas=False, market_value_only=False):
+def get_latest_market_value(transfermarkt_player_id, maximum_date=dt.date.today(), wait_seconds_max=1, as_pandas=False, market_value_only=False):
     '''
     Takes a Transfermarkt player ID, and optionally a date (defaulting to today)
     Returns the most recent Transfermarkt valuation of the player prior to the date parameter
     If no market value exists (or none before the date parameter), returns None
     Market values are in British Pounds ("GBP")
     '''
+
+    if wait_seconds_max > 1:
+        sleep_time = rng.uniform(1, wait_seconds_max)
+        sleep(sleep_time)
 
     player_name, market_values = get_market_value_history_of_player(
         transfermarkt_player_id)
@@ -99,6 +113,7 @@ def get_latest_market_value(transfermarkt_player_id, maximum_date=dt.date.today(
         market_vals_clean = None
 
     return market_vals_clean
+
 
 if __name__ == "__main__":
     messi_market_values = get_market_value_history_of_player(28003)
