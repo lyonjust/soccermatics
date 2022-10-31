@@ -21,7 +21,7 @@ headers = {'User-Agent':
 base_url = 'https://www.transfermarkt.com/a/marktwertverlauf/spieler/'
 
 columns = ['player_name', 'transfermarkt_player_id',
-           'date', 'market_value_in_gbp']
+           'date', 'market_value_in_eur']
 
 
 def get_market_value_history_of_player(transfermarkt_player_id, retry_count=0):
@@ -30,7 +30,7 @@ def get_market_value_history_of_player(transfermarkt_player_id, retry_count=0):
     Returns a tuple of player name and a "list of dictionaries" of the market value history of the player according to Transfermarkt
     Each element of the list represents a single datapoint of market value history
     Dictionary keys:
-        "y" = market value in GBP
+        "y" = market value in eur
         "verein" = club
         "age" = age in years
         "mw" = shorthand market valuation
@@ -76,7 +76,7 @@ def get_latest_market_value(transfermarkt_player_id, maximum_date=dt.date.today(
     Takes a Transfermarkt player ID, and optionally a date (defaulting to today)
     Returns the most recent Transfermarkt valuation of the player prior to the date parameter
     If no market value exists (or none before the date parameter), returns None
-    Market values are in British Pounds ("GBP")
+    Market values are in Euros ("eur")
     '''
 
     if wait_seconds_max > 1:
